@@ -8,6 +8,7 @@ Enhanced with forced decision retry to eliminate ambiguous responses
 import json
 import time
 import socket
+import getpass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -71,7 +72,7 @@ class EpisodicIPDGame:
             (action_0, action_1, round_data)
         """
         if self.config.verbose:
-            print(f"  Round {round_num + 1}/{self.config.rounds_per_episode}", end=" ")
+            print(f"  Round {round_num + 1}/{self.config.rounds_per_episode}", end=" ", flush=True)
         
         # Get decisions from both agents (with forced decision retry)
         action_0, reasoning_0 = self._get_agent_decision_with_retry(
@@ -122,7 +123,7 @@ class EpisodicIPDGame:
         }
         
         if self.config.verbose:
-            print(f"→ {action_0[0]}{action_1[0]} ({payoff_0},{payoff_1})")
+            print(f"→ {action_0[0]}{action_1[0]} ({payoff_0},{payoff_1})", flush=True)
         
         return action_0, action_1, round_data
     
@@ -133,9 +134,9 @@ class EpisodicIPDGame:
         Returns:
             Episode data dictionary
         """
-        print(f"\n{'='*80}")
-        print(f"PERIOD {episode_num + 1}/{self.config.num_episodes}")
-        print(f"{'='*80}")
+        print(f"\n{'='*80}", flush=True)
+        print(f"PERIOD {episode_num + 1}/{self.config.num_episodes}", flush=True)
+        print(f"{'='*80}", flush=True)
         
         # Episode-specific state
         episode_history_0 = []
@@ -156,12 +157,12 @@ class EpisodicIPDGame:
         coop_0 = sum(1 for r in episode_history_0 if r['my_action'] == 'COOPERATE')
         coop_1 = sum(1 for r in episode_history_1 if r['my_action'] == 'COOPERATE')
         
-        print(f"\nPeriod {episode_num + 1} complete:")
-        print(f"  Agent 0: {episode_scores[0]} points ({coop_0}/{self.config.rounds_per_episode} cooperate)")
-        print(f"  Agent 1: {episode_scores[1]} points ({coop_1}/{self.config.rounds_per_episode} cooperate)")
+        print(f"\nPeriod {episode_num + 1} complete:", flush=True)
+        print(f"  Agent 0: {episode_scores[0]} points ({coop_0}/{self.config.rounds_per_episode} cooperate)", flush=True)
+        print(f"  Agent 1: {episode_scores[1]} points ({coop_1}/{self.config.rounds_per_episode} cooperate)", flush=True)
         
         # Get reflections from both agents
-        print(f"\nGetting reflections...")
+        print(f"\nGetting reflections...", flush=True)
         reflection_0 = self._get_reflection(
             self.agent_0, episode_num, episode_history_0, 
             episode_scores[0], episode_scores[1]
@@ -211,18 +212,18 @@ class EpisodicIPDGame:
         Returns:
             Game results dictionary
         """
-        print(f"\n{'='*80}")
-        print(f"EPISODIC IPD SIMULATION")
-        print(f"{'='*80}")
-        print(f"Episodes: {self.config.num_episodes}")
-        print(f"Rounds per episode: {self.config.rounds_per_episode}")
-        print(f"History window: {self.config.history_window_size} rounds")
-        print(f"Total rounds: {self.config.total_rounds}")
-        print(f"Agent 0: {self.agent_0.model}")
-        print(f"Agent 1: {self.agent_1.model}")
-        print(f"Temperature: {self.config.temperature}")
-        print(f"Reset between episodes: {self.config.reset_conversation_between_episodes}")
-        print(f"{'='*80}")
+        print(f"\n{'='*80}", flush=True)
+        print(f"EPISODIC IPD SIMULATION", flush=True)
+        print(f"{'='*80}", flush=True)
+        print(f"Episodes: {self.config.num_episodes}", flush=True)
+        print(f"Rounds per episode: {self.config.rounds_per_episode}", flush=True)
+        print(f"History window: {self.config.history_window_size} rounds", flush=True)
+        print(f"Total rounds: {self.config.total_rounds}", flush=True)
+        print(f"Agent 0: {self.agent_0.model}", flush=True)
+        print(f"Agent 1: {self.agent_1.model}", flush=True)
+        print(f"Temperature: {self.config.temperature}", flush=True)
+        print(f"Reset between episodes: {self.config.reset_conversation_between_episodes}", flush=True)
+        print(f"{'='*80}", flush=True)
         
         start_time = time.time()
         
@@ -240,7 +241,10 @@ class EpisodicIPDGame:
         results = {
             'timestamp': datetime.now().isoformat(),
             'hostname': socket.gethostname(),
-            'prompts': {                        # ADD THIS BLOCK
+            'username': getpass.getuser(),
+            'host_0': self.config.host_0,
+            'host_1': self.config.host_1,
+            'prompts': {
                 'system_prompt': self.system_prompt_text,
                 'reflection_template': self.reflection_template_text
             },
@@ -304,11 +308,11 @@ class EpisodicIPDGame:
         
         if decision is None:
             # Even forced retry failed - this is a critical error
-            print(f"  ⚠️  CRITICAL: {agent.agent_id} failed to provide decision after all retries")
-            print(f"      This violates game-theoretic requirements")
-            print(f"      Defaulting to DEFECT, but this should be investigated")
+            print(f"  ⚠️  CRITICAL: {agent.agent_id} failed to provide decision after all retries", flush=True)
+            print(f"      This violates game-theoretic requirements", flush=True)
+            print(f"      Defaulting to DEFECT, but this should be investigated", flush=True)
             if response:
-                print(f"      Last response: {response[:200]}...")
+                print(f"      Last response: {response[:200]}...", flush=True)
             return 'DEFECT', response or "Failed to respond after retries"
         
         return decision, response
@@ -340,28 +344,28 @@ class EpisodicIPDGame:
     
     def _print_summary(self, results: Dict):
         """Print final game summary"""
-        print(f"\n{'='*80}")
-        print("FINAL SUMMARY")
-        print(f"{'='*80}")
-        print(f"Total episodes: {results['config']['num_episodes']}")
-        print(f"Total rounds: {results['config']['total_rounds']}")
-        print(f"History window: {results['config']['history_window_size']} rounds")
-        print(f"Time elapsed: {results['elapsed_seconds']:.1f} seconds")
-        print()
-        print("OVERALL RESULTS:")
+        print(f"\n{'='*80}", flush=True)
+        print("FINAL SUMMARY", flush=True)
+        print(f"{'='*80}", flush=True)
+        print(f"Total episodes: {results['config']['num_episodes']}", flush=True)
+        print(f"Total rounds: {results['config']['total_rounds']}", flush=True)
+        print(f"History window: {results['config']['history_window_size']} rounds", flush=True)
+        print(f"Time elapsed: {results['elapsed_seconds']:.1f} seconds", flush=True)
+        print(flush=True)
+        print("OVERALL RESULTS:", flush=True)
         print(f"  Agent 0: {results['agent_0']['total_score']} points "
-              f"({results['agent_0']['overall_cooperation_rate']*100:.1f}% cooperation)")
+              f"({results['agent_0']['overall_cooperation_rate']*100:.1f}% cooperation)", flush=True)
         print(f"  Agent 1: {results['agent_1']['total_score']} points "
-              f"({results['agent_1']['overall_cooperation_rate']*100:.1f}% cooperation)")
-        print()
-        print("BY EPISODE:")
+              f"({results['agent_1']['overall_cooperation_rate']*100:.1f}% cooperation)", flush=True)
+        print(flush=True)
+        print("BY EPISODE:", flush=True)
         for ep in results['episodes']:
             print(f"  Period {ep['episode']}: "
                   f"Agent 0: {ep['agent_0']['episode_score']} pts "
                   f"({ep['agent_0']['cooperation_rate']*100:.0f}% coop), "
                   f"Agent 1: {ep['agent_1']['episode_score']} pts "
-                  f"({ep['agent_1']['cooperation_rate']*100:.0f}% coop)")
-        print(f"{'='*80}\n")
+                  f"({ep['agent_1']['cooperation_rate']*100:.0f}% coop)", flush=True)
+        print(f"{'='*80}\n", flush=True)
 
 
 def main():
@@ -401,15 +405,15 @@ def main():
     # Load system prompt from file or use default
     try:
         system_prompt = load_system_prompt(args.system_prompt)
-        print(f"Loaded system prompt from: {args.system_prompt}")
+        print(f"Loaded system prompt from: {args.system_prompt}", flush=True)
     except FileNotFoundError as e:
-        print(f"Warning: {e}")
-        print("Using default system prompt")
+        print(f"Warning: {e}", flush=True)
+        print("Using default system prompt", flush=True)
         system_prompt = DEFAULT_SYSTEM_PROMPT
         
     try:
         reflection_template = load_reflection_template(args.reflection_template)
-        print(f"Loaded reflection template from: {args.reflection_template}")
+        print(f"Loaded reflection template from: {args.reflection_template}", flush=True)
     except FileNotFoundError:
         reflection_template = ""  # Will use built-in templates    
     
@@ -433,7 +437,7 @@ def main():
     )
     
     # Create agents
-    print("Initializing agents...")
+    print("Initializing agents...", flush=True)
     agent_0 = OllamaAgent(
         agent_id="agent_0",
         model=config.model_0,
@@ -480,7 +484,7 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(results, f, indent=2)
     
-    print(f"Results saved to: {output_path}")
+    print(f"Results saved to: {output_path}", flush=True)
 
 
 if __name__ == "__main__":
