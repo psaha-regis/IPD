@@ -1,4 +1,11 @@
-import argparse, glob, json, logging, os, psycopg
+import argparse
+import glob
+import json
+import logging
+import os
+
+import pandas as pd
+import psycopg
 from psycopg.rows import dict_row
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,9 +31,59 @@ class ForgeDB:
             row_factory=dict_row
         )
     
+    def query(self, sql, params=None):
+        with self.conn.cursor() as cur:
+            cur.execute(sql, params)
+            return cur.fetchall()
+
+    def get_results(self, start_date=None, end_date=None, username=None, limit=None):
+        """
+        Query Iterative Prisoner's Dillema (IPD) game results and return as a pandas DataFrame.
+        
+        Parameters:
+            start_date: Filter results on or after this date (string or datetime)
+            end_date:   Filter results on or before this date (string or datetime)
+            username:   Filter by username
+            limit:      Maximum rows to return
+        """
+
+        try:
+            sql = "SELECT * FROM ipd2.results_vw WHERE 1=1"
+            params = {}
+            
+            if start_date is not None:
+                sql += " AND timestamp >= %(start_date)s"
+                params['start_date'] = start_date
+            
+            if end_date is not None:
+                sql += " AND timestamp <= %(end_date)s"
+                params['end_date'] = end_date
+            
+            if username is not None:
+                sql += " AND username = %(username)s"
+                params['username'] = username
+            
+            sql += " ORDER BY timestamp, agent_idx, episode, round"
+            
+            if limit is not None:
+                sql += f" LIMIT {limit}"
+            
+            with self.conn.cursor() as cur:
+                cur.execute(sql, params)
+                rows = cur.fetchall()
+            
+            df = pd.DataFrame(rows)
+            return df
+        
+        except Exception as e:
+            logging.error(f"get_results failed - {e}")
+            raise
+
     def close(self):
         """Close the database connection."""
         self.conn.close()
+
+##### Remaining methods are used at the CLI for importing files into the DB #####
 
     def load_json(self, filepath, user_name='unknown'):
         """
@@ -310,8 +367,7 @@ class ForgeDB:
         
         else:
             logging.error(f"Path not found: {path}")
-            return None    
-
+            return None
 
 if __name__ == '__main__':
 
