@@ -211,7 +211,9 @@ class ForgeDB:
             return df
         
         except Exception as e:
-            logging.error(f"get_results failed - {e}")
+            err_msg = f"_query_view({view_name}) failed - {e}"
+            logging.error(err_msg)
+            print(err_msg)
             raise
 
     # ==========================================================================
@@ -437,13 +439,17 @@ class ForgeDB:
         # Prevent duplicate test results from import
         except psycopg.errors.UniqueViolation as e:
             self.conn.rollback()
-            logging.warning(f"Duplicate file skipped: {filepath} - {e}")
+            err_msg = f"Duplicate file skipped: {filepath} - {e}"
+            logging.warning(err_msg)
+            print(err_msg)
             return None
         
         # Unexpected exception occurred
         except Exception as e:
             self.conn.rollback()
-            logging.error(f"Failed to load {filepath} - {e}")
+            err_msg = f"Failed to load {filepath} - {e}"
+            logging.error(err_msg)
+            print(err_msg)
             raise
 
     def load_batch(self, source, pattern='*.json', user_name='unknown'):
@@ -478,6 +484,8 @@ class ForgeDB:
                     results['skipped'].append(filepath)
                     
             except Exception as e:
+                err_msg = f"Failed to load {filepath} - {e}"
+                print(err_msg)
                 results['failed'].append((filepath, str(e)))
         
         logging.info(f"Batch complete: {len(results['loaded'])} loaded, "
