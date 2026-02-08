@@ -56,12 +56,39 @@ class ForgeDB:
         with self.conn.cursor() as cur:
             cur.execute(sql, params)
             return cur.fetchall()
+
+    def get_raw_data(self, start_date=None, end_date=None, username=None, filename=None, limit=None ):
+        """
+        Query Iterative Prisoner's Dilemma (IPD) game results and return as a pandas DataFrame.
+
+        This query returns the metadata for a given experiment. Fields include:
+            results_id, filename, username, timestamp, and raw_json.
         
+        Parameters:
+            start_date: Filter results on or after this date (string or datetime)
+            end_date:   Filter results on or before this date (string or datetime)
+            username:   Filter by username (full or partial, % is wildcard char, case insensitive)
+            filename:   Filter by name of the results JSON file (full or partial, 
+                            % is wildcard, case insensitive)
+            limit:      Maximum rows to return
+
+        Example Usage:
+            db.get_results(username='dhart')
+            db.get_results(username='dhart', filename='%ep50%') # get all filenames with ep50
+            db.get_results(
+                username='dhart',
+                filename='%ep50%',
+                start_date='2026-01-25',
+                end_date='2026-01-26 17:00:00')
+        """
+        return self._query_view('get_raw_data_vw', start_date=start_date, end_date=end_date, 
+            username=username, filename=filename, limit=limit)
+
     def get_results(self, start_date=None, end_date=None, username=None, filename=None, limit=None ):
         """
         Query Iterative Prisoner's Dilemma (IPD) game results and return as a pandas DataFrame.
 
-        This query returns all data for a given experiment with each row representing
+        This query returns ALL data columns for a given experiment with each row representing
         a single round of IPD data per agent. 
         
         **Note:** Columns will contain duplicate data and require grouping for data analysis.
@@ -73,73 +100,85 @@ class ForgeDB:
             filename:   Filter by name of the results JSON file (full or partial, 
                             % is wildcard, case insensitive)
             limit:      Maximum rows to return
-
-        Example Usage:
-            db.get_results(username='dhart')
-            db.get_results(username='dhart', filename='%ep50%') # get all filenames with ep50
-            db.get_results(
-                username='dhart',
-                filename='%ep50%',
-                start_date='2026-01-25',
-                end_date='2026-01-26 17:00:00')
         """
         return self._query_view('results_vw', start_date=start_date, end_date=end_date, 
             username=username, filename=filename, limit=limit)
 
     def get_summary(self, start_date=None, end_date=None, username=None, filename=None, limit=None ):
         """
-        Query Iterative Prisoner's Dilemma (IPD) game results and return as a pandas DataFrame.
+            Query Iterative Prisoner's Dilemma (IPD) game results and return as a pandas DataFrame.
 
-        This query returns summary data for a given experiment with each row containing distinct
-        data. Agent data has been pivoted to columns for ease of data analysis.
+            This query returns summary data for a given experiment with each row containing distinct
+            data without episodes and rounds. Agent data has been pivoted to columns for ease of data 
+            analysis.
 
-        Parameters:
-            start_date: Filter results on or after this date (string or datetime)
-            end_date:   Filter results on or before this date (string or datetime)
-            username:   Filter by username (full or partial, % is wildcard char, case insensitive)
-            filename:   Filter by name of the results JSON file (full or partial, 
-                            % is wildcard, case insensitive)
-            limit:      Maximum rows to return
-
-        Example Usage:
-            db.get_results(username='dhart')
-            db.get_results(username='dhart', filename='%ep50%') # get all filenames with ep50
-            db.get_results(
-                username='dhart',
-                filename='%ep50%',
-                start_date='2026-01-25',
-                end_date='2026-01-26 17:00:00')
+            Parameters:
+                start_date: Filter results on or after this date (string or datetime)
+                end_date:   Filter results on or before this date (string or datetime)
+                username:   Filter by username (full or partial, % is wildcard char, case insensitive)
+                filename:   Filter by name of the results JSON file (full or partial, 
+                                % is wildcard, case insensitive)
+                limit:      Maximum rows to return
         """
-        return self._query_view('session_summary_vw', start_date=start_date, end_date=end_date, 
+        return self._query_view('experiment_summary_vw', start_date=start_date, end_date=end_date, 
             username=username, filename=filename, limit=limit)
 
-    def get_rounds(self, start_date=None, end_date=None, username=None, filename=None, limit=None ):
+    def get_episode_summary(self, start_date=None, end_date=None, username=None, filename=None, limit=None ):
         """
-        Query Iterative Prisoner's Dilemma (IPD) game results and return as a pandas DataFrame.
+            Query Iterative Prisoner's Dilemma (IPD) game results and return as a pandas DataFrame.
 
-        This query returns detailed data on each agent per rounds.
-        **Note:** Columns will contain duplicate data and require grouping for data analysis.
+            This query returns summary data for each EPISODE of experimental data.
+            **Note:** Columns will contain 1 row per EPISODE of experiment data with agent data pivoted
+                from rows to columns.
 
-        Parameters:
-            start_date: Filter results on or after this date (string or datetime)
-            end_date:   Filter results on or before this date (string or datetime)
-            username:   Filter by username (full or partial, % is wildcard char, case insensitive)
-            filename:   Filter by name of the results JSON file (full or partial, 
-                            % is wildcard, case insensitive)
-            limit:      Maximum rows to return
+            Parameters:
+                start_date: Filter results on or after this date (string or datetime)
+                end_date:   Filter results on or before this date (string or datetime)
+                username:   Filter by username (full or partial, % is wildcard char, case insensitive)
+                filename:   Filter by name of the results JSON file (full or partial, 
+                                % is wildcard, case insensitive)
+                limit:      Maximum rows to return
+        """
+        return self._query_view('episode_summary_vw', start_date=start_date, end_date=end_date, 
+            username=username, filename=filename, limit=limit)
 
-        Example Usage:
-            db.get_results(username='dhart')
-            db.get_results(username='dhart', filename='%ep50%') # get all filenames with ep50
-            db.get_results(
-                username='dhart',
-                filename='%ep50%',
-                start_date='2026-01-25',
-                end_date='2026-01-26 17:00:00')
+    def get_rounds_summary(self, start_date=None, end_date=None, username=None, filename=None, limit=None ):
+        """
+            Query Iterative Prisoner's Dilemma (IPD) game results and return as a pandas DataFrame.
+
+            This query returns summary data for each ROUND of experimental data.
+            **Note:** Columns will contain 1 row per ROUND of experiment data with agent data pivoted
+                from rows to columns.
+
+            Parameters:
+                start_date: Filter results on or after this date (string or datetime)
+                end_date:   Filter results on or before this date (string or datetime)
+                username:   Filter by username (full or partial, % is wildcard char, case insensitive)
+                filename:   Filter by name of the results JSON file (full or partial, 
+                                % is wildcard, case insensitive)
+                limit:      Maximum rows to return
+        """
+        return self._query_view('rounds_summary_vw', start_date=start_date, end_date=end_date, 
+            username=username, filename=filename, limit=limit)
+
+    def get_rounds_detail(self, start_date=None, end_date=None, username=None, filename=None, limit=None ):
+        """
+            Query Iterative Prisoner's Dilemma (IPD) game results and return as a pandas DataFrame.
+
+            This query returns DETAILED data on each agent per round.
+            **Note:** Columns will contain duplicate data and require grouping for data analysis.
+
+            Parameters:
+                start_date: Filter results on or after this date (string or datetime)
+                end_date:   Filter results on or before this date (string or datetime)
+                username:   Filter by username (full or partial, % is wildcard char, case insensitive)
+                filename:   Filter by name of the results JSON file (full or partial, 
+                                % is wildcard, case insensitive)
+                limit:      Maximum rows to return
         """
         return self._query_view('rounds_detail_vw', start_date=start_date, end_date=end_date, 
             username=username, filename=filename, limit=limit)
-
+    
     def _query_view(self, view_name, start_date=None, end_date=None, username=None, filename=None, limit=None):
         try:
             sql = f"SELECT * FROM ipd2.{view_name} WHERE 1=1"
@@ -407,8 +446,7 @@ class ForgeDB:
             logging.error(f"Failed to load {filepath} - {e}")
             raise
 
-
-    def _load_batch(self, source, pattern='*.json', user_name='unknown'):
+    def load_batch(self, source, pattern='*.json', user_name='unknown'):
         """ Load JSON files from a directory or a list of filepaths.
             To be used in CLI environment only.
         """
@@ -457,12 +495,12 @@ class ForgeDB:
             return self.load_json(path, user_name)
         
         elif os.path.isdir(path):
-            return self._load_batch(path, user_name=user_name)
+            return self.load_batch(path, user_name=user_name)
         
         elif '*' in path or '?' in path:
             dirpath = os.path.dirname(path) or '.'
             pattern = os.path.basename(path)
-            return self._load_batch(dirpath, pattern, user_name)
+            return self.load_batch(dirpath, pattern, user_name)
         
         else:
             logging.error(f"Path not found: {path}")
@@ -487,7 +525,7 @@ if __name__ == '__main__':
             elif isinstance(result, dict):
                 print(f"Loaded: {len(result['loaded'])}, Skipped: {len(result['skipped'])}, Failed: {len(result['failed'])}")
         else:
-            results = db._load_batch(args.import_path, user_name=args.user_name)
+            results = db.load_batch(args.import_path, user_name=args.user_name)
             print(f"Loaded: {len(results['loaded'])}, Skipped: {len(results['skipped'])}, Failed: {len(results['failed'])}")
         
         db.close()

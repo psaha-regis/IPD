@@ -89,14 +89,24 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA ipd2
   TO techkgirl, dhart, ksorauf, priyankasaha205;
   
  /********************************* SQL Views *********************************/
+CREATE OR REPLACE VIEW ipd2.get_raw_data_vw AS
+SELECT
+    r.results_id
+    ,r.username
+    ,r.filename
+    ,r.timestamp
+    ,r.raw_json
+FROM ipd2.results r
+ORDER BY r.username, r.timestamp;
+ 
 CREATE OR REPLACE VIEW ipd2.results_vw AS
 SELECT
     -- Game set details and configuration
     r.results_id
-    ,r.hostname
     ,r.username
     ,r.filename
     ,r.timestamp
+    ,r.hostname
     ,r.elapsed_seconds
     ,r.cfg_num_episodes
     ,r.cfg_round_per_episode
@@ -157,14 +167,14 @@ ORDER BY
     ,rd.round
 ;
 
-CREATE OR REPLACE VIEW ipd2.session_summary_vw AS
+CREATE OR REPLACE VIEW ipd2.experiment_summary_vw AS
 SELECT
     -- Game set details and configuration
     r.results_id
-    ,r.hostname
     ,r.username
     ,r.filename
     ,r.timestamp
+    ,r.hostname
     ,r.elapsed_seconds
 
     -- Agent 0
@@ -209,48 +219,40 @@ FROM
 ORDER BY r.timestamp
 ;
 
-CREATE OR REPLACE VIEW ipd2.rounds_detail_vw AS
+CREATE OR REPLACE VIEW ipd2.episode_summary_vw AS
 SELECT
     r.results_id
-    ,r.filename
     ,r.username
+    ,r.filename
     ,r.timestamp
-
-    ,e.episode_id
     
-    ,a.agent_idx
-    ,e.episode
-    ,rd.round
+    ,e0.episode
 
-    ,CONCAT('agent_',  a.agent_idx) AS agent
-    ,rd.action
-    ,rd.payoff
-    ,rd.ep_cumulative_score
-    ,rd.reasoning
+    ,e0.score                   AS agent_0_total_score
+    ,e0.cooperations            AS agent_0_total_cooperations
+    ,e0.cooperation_rate        AS agent_0_coop_rate
+    ,e0.reflection              AS agent_0_reflection
 
-    ,e.score                        AS ep_score
-    ,e.cooperations                 AS ep_cooperations
-    ,e.cooperation_rate             AS ep_coop_rate
-    ,e.reflection                   AS ep_reflection
-    
+    ,e1.score                   AS agent_1_total_score
+    ,e1.cooperations            AS agent_1_total_cooperations
+    ,e1.cooperation_rate        AS agent_1_coop_rate
+    ,e1.reflection              AS agent_1_reflection
+
 FROM 
     ipd2.results r
-    
-    JOIN ipd2.llm_agents a
-        ON a.results_id = r.results_id
-        
-    JOIN ipd2.episodes e
-        ON e.results_id = r.results_id
-        AND e.agent_idx = a.agent_idx
 
-    JOIN ipd2.rounds rd
-        ON rd.episode_id = e.episode_id
+    JOIN ipd2.episodes e0
+        on e0.results_id = r.results_id
+        and e0.agent_idx = 0
     
+    JOIN ipd2.episodes e1
+        on e1.results_id = r.results_id
+        and e1.agent_idx = 1
+        and e1.episode = e0.episode
+
 ORDER BY
     r.timestamp
-    ,a.agent_idx
-    ,e.episode
-    ,rd.round
+    ,e0.episode
 ;
 
 CREATE OR REPLACE VIEW ipd2.rounds_summary_vw AS
@@ -317,3 +319,48 @@ ORDER BY
     ,a0.episode
     ,a0.round
 ;
+
+CREATE OR REPLACE VIEW ipd2.rounds_detail_vw AS
+SELECT
+    r.results_id
+    ,r.filename
+    ,r.username
+    ,r.timestamp
+
+    ,e.episode_id
+    
+    ,a.agent_idx
+    ,e.episode
+    ,rd.round
+
+    ,CONCAT('agent_',  a.agent_idx) AS agent
+    ,rd.action
+    ,rd.payoff
+    ,rd.ep_cumulative_score
+    ,rd.reasoning
+
+    ,e.score                        AS ep_score
+    ,e.cooperations                 AS ep_cooperations
+    ,e.cooperation_rate             AS ep_coop_rate
+    ,e.reflection                   AS ep_reflection
+    
+FROM 
+    ipd2.results r
+    
+    JOIN ipd2.llm_agents a
+        ON a.results_id = r.results_id
+        
+    JOIN ipd2.episodes e
+        ON e.results_id = r.results_id
+        AND e.agent_idx = a.agent_idx
+
+    JOIN ipd2.rounds rd
+        ON rd.episode_id = e.episode_id
+    
+ORDER BY
+    r.timestamp
+    ,a.agent_idx
+    ,e.episode
+    ,rd.round
+;
+
