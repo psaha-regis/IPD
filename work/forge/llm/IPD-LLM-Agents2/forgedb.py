@@ -81,7 +81,7 @@ class ForgeDB:
                 start_date='2026-01-25',
                 end_date='2026-01-26 17:00:00')
         """
-        return self._query_view('get_raw_data_vw', start_date=start_date, end_date=end_date, 
+        return self._query_view('raw_data_vw', start_date=start_date, end_date=end_date, 
             username=username, filename=filename, limit=limit)
 
     def get_results(self, start_date=None, end_date=None, username=None, filename=None, limit=None ):
