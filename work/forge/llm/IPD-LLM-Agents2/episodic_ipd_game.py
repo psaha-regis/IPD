@@ -379,9 +379,9 @@ def main():
                        help="Number of recent rounds to show in history (default: 10)")
     parser.add_argument("--temperature", type=float, default=0.7, help="Sampling temperature")
     parser.add_argument("--model-0", type=str, default="llama3:8b-instruct-q5_K_M")
-    parser.add_argument("--host-0", type=str, default="iron")
+    parser.add_argument("--host-0", type=str, default="tungsten")
     parser.add_argument("--model-1", type=str, default="llama3:8b-instruct-q5_K_M")
-    parser.add_argument("--host-1", type=str, default="iron")
+    parser.add_argument("--host-1", type=str, default="tungsten")
     parser.add_argument("--no-reset", action="store_true", help="Don't reset context between episodes")
     parser.add_argument("--reflection-type", type=str, default="standard", 
                        choices=["minimal", "standard", "detailed"])
