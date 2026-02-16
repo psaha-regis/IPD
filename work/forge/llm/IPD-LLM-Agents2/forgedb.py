@@ -53,6 +53,17 @@ class ForgeDB:
     # Methods for querying the database
     # ==========================================================================
     def query(self, sql, params=None):
+        """
+        Execute a custom SQL query and return results as a list of dictionaries.
+
+        Parameters:
+            sql:    SQL query string (use %(name)s for parameterized queries)
+            params: Optional dictionary of query parameters
+
+        Example:
+            rows = db.query("SELECT * FROM ipd2.results WHERE username = %(user)s",
+                            params={'user': 'dhart'})
+        """
         with self.conn.cursor() as cur:
             cur.execute(sql, params)
             return cur.fetchall()

@@ -78,15 +78,15 @@ CREATE TABLE ipd2.rounds (
 
 /******************************** Grant Access ********************************/
 GRANT USAGE ON SCHEMA ipd2 
-  TO techkgirl, dhart, ksorauf, priyankasaha205;
+  TO techkgirl, dhart, ksorauf, priyankasaha205, theandyman;
 
 /* Grant full access to tables */
 GRANT ALL ON ALL TABLES IN SCHEMA ipd2 
-  TO techkgirl, dhart, ksorauf, priyankasaha205;
+  TO techkgirl, dhart, ksorauf, priyankasaha205, theandyman;
 
 /* Grant access to read and use SERIAL fields */
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA ipd2 
-  TO techkgirl, dhart, ksorauf, priyankasaha205;
+  TO techkgirl, dhart, ksorauf, priyankasaha205, theandyman;
   
  /********************************* SQL Views *********************************/
 CREATE OR REPLACE VIEW ipd2.get_raw_data_vw AS
