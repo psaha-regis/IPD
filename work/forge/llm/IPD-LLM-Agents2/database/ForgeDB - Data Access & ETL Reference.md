@@ -330,6 +330,31 @@ You can also query the base tables directly: `ipd2.results`, `ipd2.llm_agents`, 
 
 ---
 
+### Deleting Data
+
+The ForgeDB Python class does not provide a delete method. This is to safeguard research when interacting through Python. To remove experiment data, connect directly to PostgreSQL and delete rows from the `ipd2.results` table using SQL. The schema uses `ON DELETE CASCADE` to ensure that deletes performed on `ipd2.results` automatically remove all related child rows from `llm_agents`, `episodes`, and `rounds`.
+```bash
+psql -h platinum -d forge
+```
+```sql
+-- Delete by results_id
+DELETE FROM ipd2.results WHERE results_id = 42;
+
+-- Delete by filename
+DELETE FROM ipd2.results WHERE filename = 'episodic_game_20260126_172659.json';
+
+-- Delete by username
+DELETE FROM ipd2.results WHERE username = 'testuser';
+
+-- Delete by date range
+DELETE FROM ipd2.results 
+WHERE timestamp >= '2026-01-27' AND timestamp < '2026-01-28';
+```
+
+> **Caution:** Deletes are permanent and cascade to all child tables. Verify your WHERE clause before executing.
+
+---
+
 ## Quick Reference Card
 
 ```python

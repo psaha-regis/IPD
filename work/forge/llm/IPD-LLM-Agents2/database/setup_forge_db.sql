@@ -14,7 +14,7 @@ CREATE SCHEMA ipd2;
 /***************************** Create the Tables ******************************/
 CREATE TABLE ipd2.results (
   results_id                    SERIAL PRIMARY KEY
-  ,filename                      VARCHAR(128) UNIQUE
+  ,filename                     VARCHAR(128) UNIQUE
   ,timestamp                    TIMESTAMPTZ UNIQUE
   ,hostname                     VARCHAR(64)
   ,username                     VARCHAR(64)
@@ -46,7 +46,8 @@ CREATE TABLE ipd2.llm_agents (
   ,overall_cooperation_rate REAL
 
   ,PRIMARY KEY (results_id, agent_idx)
-  ,FOREIGN KEY (results_id) REFERENCES ipd2.results(results_id)
+  ,FOREIGN KEY (results_id) 
+        REFERENCES ipd2.results(results_id) ON DELETE CASCADE
 );
 
 CREATE TABLE ipd2.episodes (
@@ -59,8 +60,12 @@ CREATE TABLE ipd2.episodes (
   ,cooperation_rate         DOUBLE PRECISION
   ,reflection               TEXT
 
-  ,FOREIGN KEY (results_id) REFERENCES ipd2.results(results_id)
-  ,FOREIGN KEY (results_id, agent_idx) REFERENCES ipd2.llm_agents(results_id, agent_idx)
+  ,FOREIGN KEY (results_id) 
+        REFERENCES ipd2.results(results_id) ON DELETE CASCADE
+
+  ,FOREIGN KEY (results_id, agent_idx) 
+        REFERENCES ipd2.llm_agents(results_id, agent_idx) ON DELETE CASCADE
+
   ,UNIQUE (results_id, agent_idx, episode)
 );
 
@@ -73,7 +78,9 @@ CREATE TABLE ipd2.rounds (
   ,reasoning                TEXT
 
   ,PRIMARY KEY (episode_id, round)
-  ,FOREIGN KEY (episode_id) REFERENCES ipd2.episodes(episode_id)
+
+  ,FOREIGN KEY (episode_id) 
+        REFERENCES ipd2.episodes(episode_id) ON DELETE CASCADE
 );
 
 /******************************** Grant Access ********************************/
