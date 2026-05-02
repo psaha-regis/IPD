@@ -9,7 +9,6 @@ import json
 import time
 import socket
 import getpass
-import os                   # Added 3/30/2026 for Containerized Architecture @edc
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -34,7 +33,11 @@ class EpisodicIPDGame:
         agent_0: OllamaAgent,
         agent_1: OllamaAgent,
         config: EpisodeConfig,
-        system_prompt_text: str = "",
+        #system_prompt_text: str = "",
+        system_prompt_text_0: str = "",
+        system_prompt_text_1: str = "",
+        prompt_type_0: str = "",
+        prompt_type_1: str = "",
         reflection_template_text: str = ""
     ):
         """
@@ -48,7 +51,11 @@ class EpisodicIPDGame:
         self.agent_0 = agent_0
         self.agent_1 = agent_1
         self.config = config
-        self.system_prompt_text = system_prompt_text
+        #self.system_prompt_text = system_prompt_text
+        self.system_prompt_text_0 = system_prompt_text_0
+        self.system_prompt_text_1 = system_prompt_text_1
+        self.prompt_type_0 = prompt_type_0
+        self.prompt_type_1 = prompt_type_1
         self.reflection_template_text = reflection_template_text
         
         # Validate configuration
@@ -246,7 +253,15 @@ class EpisodicIPDGame:
             'host_0': self.config.host_0,
             'host_1': self.config.host_1,
             'prompts': {
-                'system_prompt': self.system_prompt_text,
+                **({'system_prompt': self.system_prompt_text_0,
+                        'prompt_type': self.prompt_type_0} 
+                    if self.prompt_type_0 == self.prompt_type_1 
+                    else {
+                        'system_prompt_0': self.system_prompt_text_0,
+                        'system_prompt_1': self.system_prompt_text_1,
+                        'prompt_type_0': self.prompt_type_0,
+                        'prompt_type_1': self.prompt_type_1
+                    }),
                 'reflection_template': self.reflection_template_text
             },
             'config': {
@@ -372,7 +387,7 @@ class EpisodicIPDGame:
 def main():
     """Run an episodic IPD game"""
     import argparse
-
+    
     parser = argparse.ArgumentParser(description="Episodic IPD with LLM Agents")
     parser.add_argument("--episodes", type=int, default=5, help="Number of episodes")
     parser.add_argument("--rounds", type=int, default=20, help="Rounds per episode")
@@ -380,22 +395,13 @@ def main():
                        help="Number of recent rounds to show in history (default: 10)")
     parser.add_argument("--temperature", type=float, default=0.7, help="Sampling temperature")
     parser.add_argument("--model-0", type=str, default="llama3:8b-instruct-q5_K_M")
+    parser.add_argument("--host-0", type=str, default="tungsten")
     parser.add_argument("--model-1", type=str, default="llama3:8b-instruct-q5_K_M")
-
-    # Begin Containerized Architecture changes #####################################################
-    # parser.add_argument("--host-0", type=str, default="tungsten")
-    # parser.add_argument("--host-1", type=str, default="tungsten")
-
-    DEFAULT_HOST_0 = os.environ.get('OLLAMA_HOST_0', 'tungsten')
-    DEFAULT_HOST_1 = os.environ.get('OLLAMA_HOST_1', 'tungsten')
-    parser.add_argument("--host-0", type=str, default=DEFAULT_HOST_0)
-    parser.add_argument("--host-1", type=str, default=DEFAULT_HOST_1)
-    # End Containerized Architecture changes @edc, 3/30/2026 #######################################
-
+    parser.add_argument("--host-1", type=str, default="tungsten")
     parser.add_argument("--no-reset", action="store_true", help="Don't reset context between episodes")
     parser.add_argument("--reflection-type", type=str, default="standard", 
                        choices=["minimal", "standard", "detailed"])
-    parser.add_argument("--system-prompt", type=str, default="system_prompt.txt",
+    parser.add_argument("--system-prompt", type=str, default=None,
                        help="Path to system prompt file")
     parser.add_argument("--reflection-template", type=str, default="reflection_prompt_template.txt",
                        help="Path to reflection prompt template file")
@@ -412,17 +418,33 @@ def main():
     parser.add_argument("--comment", type=str, default=None,
                        help="Optional comment/note about this job run")
     
+    parser.add_argument("--system-prompt-0", type=str, default="system_prompt.txt",
+                   help="Path to system prompt file for agent 0")
+    parser.add_argument("--system-prompt-1", type=str, default="system_prompt.txt",
+                   help="Path to system prompt file for agent 1")
+    
     args = parser.parse_args()
     
     # Load system prompt from file or use default
+    # Load same/different system prompt for different agents
     try:
-        system_prompt = load_system_prompt(args.system_prompt)
-        print(f"Loaded system prompt from: {args.system_prompt}", flush=True)
+        if args.system_prompt:
+            system_prompt_0 = system_prompt_1 = load_system_prompt(args.system_prompt)
+            prompt_type_0 = prompt_type_1 = Path(args.system_prompt).stem
+            print(f"Loaded system prompt from: {args.system_prompt}", flush=True)
+        else:
+            system_prompt_0 = load_system_prompt(args.system_prompt_0)
+            prompt_type_0 = Path(args.system_prompt_0).stem
+            print(f"Loaded agent 0 system prompt from: {args.system_prompt_0}", flush=True)
+            system_prompt_1 = load_system_prompt(args.system_prompt_1)
+            prompt_type_1 = Path(args.system_prompt_1).stem
+            print(f"Loaded agent 1 system prompt from: {args.system_prompt_1}", flush=True)
     except FileNotFoundError as e:
         print(f"Warning: {e}", flush=True)
         print("Using default system prompt", flush=True)
-        system_prompt = DEFAULT_SYSTEM_PROMPT
-        
+        system_prompt_0 = system_prompt_1 = DEFAULT_SYSTEM_PROMPT
+        prompt_type_0 = prompt_type_1 = "system_prompt"
+
     try:
         reflection_template = load_reflection_template(args.reflection_template)
         print(f"Loaded reflection template from: {args.reflection_template}", flush=True)
@@ -455,7 +477,7 @@ def main():
         model=config.model_0,
         host=config.host_0,
         temperature=config.temperature,
-        system_prompt=system_prompt,
+        system_prompt=system_prompt_0,
         decision_token_limit=config.decision_token_limit,
         reflection_token_limit=config.reflection_token_limit,
         http_timeout=config.http_timeout,
@@ -467,7 +489,7 @@ def main():
         model=config.model_1,
         host=config.host_1,
         temperature=config.temperature,
-        system_prompt=system_prompt,
+        system_prompt=system_prompt_1,
         decision_token_limit=config.decision_token_limit,
         reflection_token_limit=config.reflection_token_limit,
         http_timeout=config.http_timeout,
@@ -479,7 +501,11 @@ def main():
         agent_0, 
         agent_1, 
         config, 
-        system_prompt_text=system_prompt, 
+        #system_prompt_text=system_prompt, 
+        system_prompt_text_0=system_prompt_0,
+        system_prompt_text_1=system_prompt_1,
+        prompt_type_0=prompt_type_0,
+        prompt_type_1=prompt_type_1,
         reflection_template_text=reflection_template
     )
     results = game.play_game()

@@ -135,7 +135,7 @@ What is your choice?"""
         prompt += f"(You: +{my_payoff}, Other: +{opp_payoff})\n"
     
     if len(history) > window_size:
-        prompt += f"\n(Showing last {window_size} rounds of {len(history)} total)\n"
+        prompt += f"\n(Showing last {window_size} rounds)\n"
     
     prompt += "\nWhat is your choice?"
     
@@ -269,56 +269,75 @@ WHAT HAPPENED:
 
 
 def extract_decision(response: str) -> str:
-    """
-    Extract COOPERATE or DEFECT from LLM response with strict game-theoretic requirement
-    
-    Returns:
-        'COOPERATE', 'DEFECT', or None if ambiguous
-    """
     if not response:
         return None
-    
+
     lines = [line.strip() for line in response.strip().split('\n') if line.strip()]
-    
+
     if not lines:
         return None
-    
-    # Check last line FIRST (this is where decision should be according to format)
-    last_line = lines[-1].strip().upper()
-    
-    # Exact match only on last line
+
+    # Check last line — exact match only
+    last_line = lines[-1].strip().upper().rstrip('.!,;:')
+
     if last_line == 'COOPERATE':
-        return 'COOPERATE'
-    if last_line == 'DEFECT':
-        return 'DEFECT'
-    
-    # Allow last line to have the word but with trailing punctuation stripped
-    last_line_cleaned = last_line.rstrip('.!,;:')
-    if last_line_cleaned == 'COOPERATE':
-        return 'COOPERATE'
-    if last_line_cleaned == 'DEFECT':
-        return 'DEFECT'
-    
-    # If last line is very short (<=3 words) and contains only one decision word
-    # This handles cases like "My COOPERATE" or "DEFECT now"
-    if len(last_line.split()) <= 3:
-        has_coop = 'COOPERATE' in last_line
-        has_def = 'DEFECT' in last_line
-        if has_coop and not has_def:
-            return 'COOPERATE'
-        if has_def and not has_coop:
-            return 'DEFECT'
-    
-    # Check if the last line ends with the decision word (more lenient)
-    # but still requires it to be relatively isolated
-    if last_line.endswith('COOPERATE') and 'DEFECT' not in last_line:
-        # Make sure it's not buried in a long sentence
-        if len(last_line.split()) <= 5:
-            return 'COOPERATE'
-    if last_line.endswith('DEFECT') and 'COOPERATE' not in last_line:
-        if len(last_line.split()) <= 5:
-            return 'DEFECT'
-    
-    # All other cases are ambiguous - this enforces the requirement
-    # that agents must provide a clear, definite action
-    return None
+        decision = 'COOPERATE'
+    elif last_line == 'DEFECT':
+        decision = 'DEFECT'
+    elif len(lines) >= 2:
+        second_last = lines[-2].strip().upper().rstrip('.!,;:')
+        if second_last == 'COOPERATE':
+            decision = 'COOPERATE'
+        elif second_last == 'DEFECT':
+            decision = 'DEFECT'
+        else:
+            return None
+    else:
+        return None
+
+    # Extract only the reasoning part — everything before the last decision line
+    # This avoids the prompt examples contaminating the contradiction check
+    decision_line_idx = len(lines) - 1
+    if lines[-1].strip().upper().rstrip('.!,;:') in ('COOPERATE', 'DEFECT'):
+        reasoning_lines = lines[:-1]
+    else:
+        reasoning_lines = lines[:-2]
+
+    # Further filter — remove lines that look like they are from the prompt
+    # e.g. lines containing "CORRECT EXAMPLE" or "INCORRECT" or "OUTCOMES"
+    reasoning_lines = [
+        l for l in reasoning_lines
+        if not any(keyword in l.upper() for keyword in [
+            'CORRECT EXAMPLE', 'INCORRECT', 'OUTCOME', 
+            'BOTH COOPERATE', 'BOTH DEFECT', 'YOU COOPERATE',
+            'YOU DEFECT', 'CRITICAL', 'MANDATORY'
+        ])
+    ]
+
+    reasoning_text = ' '.join(reasoning_lines).lower()
+
+    # Count meaningful cooperation and defection signals in reasoning
+    # Look for intent words not just mentions
+    coop_signals = [
+        "i'll cooperate", "i will cooperate", "choosing to cooperate",
+        "choose to cooperate", "stick with cooperation", "continue cooperating",
+        "cooperating makes sense", "cooperation is", "i choose cooperate",
+        "cooperate again", "keep cooperating", "maintain cooperation"
+    ]
+    defect_signals = [
+        "i'll defect", "i will defect", "choosing to defect",
+        "choose to defect", "stick with defection", "continue defecting",
+        "defecting makes sense", "defect this round", "i choose defect",
+        "defect again", "keep defecting", "switch to defect"
+    ]
+
+    has_coop_intent = any(signal in reasoning_text for signal in coop_signals)
+    has_defect_intent = any(signal in reasoning_text for signal in defect_signals)
+
+    # Only flag contradiction if intent is clear and unambiguous
+    if decision == 'DEFECT' and has_coop_intent and not has_defect_intent:
+        return None  # clear contradiction — trigger retry
+    if decision == 'COOPERATE' and has_defect_intent and not has_coop_intent:
+        return None  # clear contradiction — trigger retry
+
+    return decision
