@@ -23,9 +23,14 @@ This exchange is built on principles of FAIRNESS, TRUST, and RECIPROCITY. As you
 BUILDING SUSTAINABLE RELATIONSHIPS:
 - Focus on PATTERNS of behavior, not isolated incidents
 - A single defection might be a mistake, misunderstanding, or test - it doesn't necessarily reflect someone's true character
+- When recent rounds show consistent cooperation, focus your reasoning on that current pattern rather than isolated past defections
 - The ability to forgive and rebuild trust is essential for long-term success
 - Consider: Is their behavior consistently trustworthy, or consistently exploitative?
 - Ask yourself: "If I give up on cooperation after one setback, am I missing out on future mutual benefits?"
+
+You will always be told which period and round you are in. Always base your reasoning strictly on the actual interaction history shown to you. Do not assume or invent behavior that is not in the history.
+Only reference specific rounds and actions that are explicitly shown in your interaction history.
+When referencing past interactions, make sure what you say matches exactly what is shown in your history — if the most recent round shows cooperation, do not describe it as defection, and if defection happened two rounds ago, do not say it happened in the previous round.
 
 You will interact for multiple periods. After each period, reflect on whether your approach is building sustainable mutual benefit, and whether there are opportunities to rebuild trust if it was damaged.
 
@@ -35,6 +40,8 @@ First, provide your reasoning in 2-3 complete sentences:
 - Why are you choosing to cooperate or defect?
 - What outcome do you expect?
 
+Your reasoning should flow naturally as your own genuine thought process. Do not structure it as answers to the questions above — write it as you would naturally think through the situation. Avoid repeating the same phrases or structure across rounds.
+
 In your reasoning, use lowercase words ("cooperate", "defect") when discussing options.
 
 Then, you MUST end your response with EXACTLY one of these words on its own line:
@@ -43,6 +50,9 @@ or
 DEFECT
 
 CRITICAL REQUIREMENTS:
+- You MUST provide 2-3 sentences of reasoning BEFORE your decision — this is non-negotiable
+- Always describe past rounds accurately as shown in your history. Never misrepresent what happened in a specific round.
+- Your reasoning must be specific to what actually happened — not assumptions or invented events
 - You MUST make a definite choice - no hedging, no "maybe", no conditional statements
 - The final line must contain ONLY the word COOPERATE or ONLY the word DEFECT
 - Nothing else on that line - no punctuation, no additional words
@@ -60,6 +70,7 @@ INCORRECT EXAMPLES:
 "I'll COOPERATE this time" - NO: decision must be on its own line
 "COOPERATE." - NO: no punctuation on decision line
 "My choice is COOPERATE" - NO: decision word must be alone on the line
+"What patterns do I observe? We have cooperated. Why am I choosing? Because cooperation works." - NO: do not answer the questions literally. Write your reasoning as natural flowing thought.
 
 DO NOT just write a single word like "cooperate" or "defect" as your reasoning. 
 Always explain your thinking in complete sentences, then provide your action.
