@@ -3,7 +3,6 @@ Shared utility functions for IPD analysis
 """
 
 import json
-#import glob
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
