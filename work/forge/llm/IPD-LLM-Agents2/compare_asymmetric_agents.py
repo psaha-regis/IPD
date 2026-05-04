@@ -92,22 +92,22 @@ def plot_comparison(json_files, output_path):
         ep_nums = sorted(sym_data[pt0].keys())
         means = [np.mean(sym_data[pt0][ep]) for ep in ep_nums]
         _plot_single(axes[0][0], ep_nums, means, '#1a66cc',
-                    f'{pt0.title()} agent — symmetric')
+                    f'{pt0.title()} Agent vs {pt0.title()} Agent')
     else:
         axes[0][0].text(0.5, 0.5, 'No data', transform=axes[0][0].transAxes,
                        ha='center', va='center', fontsize=16, color='gray')
-        axes[0][0].set_title(f'{pt0.title()} agent — symmetric',
+        axes[0][0].set_title(f'{pt0.title()} Agent vs {pt0.title()} Agent',
                             fontsize=17, fontweight='bold', pad=15, color='#2c3e50')
 
     # Top right: pt0 agent (moral) — asymmetric (agent 0)
     if ep_nums_asym:
         means_asym_0 = [np.mean(asym_data[ep]['agent_0']) for ep in ep_nums_asym]
         _plot_single(axes[0][1], ep_nums_asym, means_asym_0, '#1a66cc',
-                    f'{pt0.title()} agent — asymmetric')
+                    f'{pt0.title()} Agent vs {pt1.title()} Agent')
     else:
         axes[0][1].text(0.5, 0.5, 'No data', transform=axes[0][1].transAxes,
                        ha='center', va='center', fontsize=16, color='gray')
-        axes[0][1].set_title(f'{pt0.title()} agent — asymmetric',
+        axes[0][1].set_title(f'{pt0.title()} Agent vs {pt1.title()} Agent',
                             fontsize=17, fontweight='bold', pad=15, color='#2c3e50')
 
     # Bottom left: pt1 agent (cautious) — symmetric
@@ -115,28 +115,25 @@ def plot_comparison(json_files, output_path):
         ep_nums = sorted(sym_data[pt1].keys())
         means = [np.mean(sym_data[pt1][ep]) for ep in ep_nums]
         _plot_single(axes[1][0], ep_nums, means, '#cc3344',
-                    f'{pt1.title()} agent — symmetric')
+                    f'{pt1.title()} Agent vs {pt1.title()} Agent')
     else:
         axes[1][0].text(0.5, 0.5, 'No data', transform=axes[1][0].transAxes,
                        ha='center', va='center', fontsize=16, color='gray')
-        axes[1][0].set_title(f'{pt1.title()} agent — symmetric',
+        axes[1][0].set_title(f'{pt1.title()} Agent vs {pt1.title()} Agent',
                             fontsize=17, fontweight='bold', pad=15, color='#2c3e50')
 
     # Bottom right: pt1 agent (cautious) — asymmetric (agent 1)
     if ep_nums_asym:
         means_asym_1 = [np.mean(asym_data[ep]['agent_1']) for ep in ep_nums_asym]
         _plot_single(axes[1][1], ep_nums_asym, means_asym_1, '#1a66cc',
-                    f'{pt1.title()} agent — asymmetric')
+                    f'{pt1.title()} Agent vs {pt0.title()} Agent')
     else:
         axes[1][1].text(0.5, 0.5, 'No data', transform=axes[1][1].transAxes,
                        ha='center', va='center', fontsize=16, color='gray')
-        axes[1][1].set_title(f'{pt1.title()} agent — asymmetric',
+        axes[1][1].set_title(f'{pt1.title()} Agent vs {pt0.title()} Agent',
                             fontsize=17, fontweight='bold', pad=15, color='#2c3e50')
 
-    fig.suptitle('Cooperation Rate — Symmetric vs Asymmetric',
-                fontsize=22, fontweight='bold', color='#2c3e50')
-
-    plt.tight_layout()
+    plt.tight_layout(h_pad=6, w_pad=6)
     save_figure(fig, output_path)
     plt.close()
     print(f"✓ Plot saved to: {output_path}")

@@ -160,8 +160,7 @@ def main():
     parser.add_argument('--output-dir', type=str, default='graphs_stats',
                        help='Directory to save output plots')
     parser.add_argument('--output-name', type=str,
-                       default='mean_cooperation_per_prompt.png',
-                       help='Output filename')
+                    default='mean_cooperation_per_prompt.pdf')
 
     args = parser.parse_args()
 
@@ -197,3 +196,4 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
+    

@@ -176,7 +176,7 @@ def main():
     parser.add_argument('--results-dir', type=str, default='results/asymmetric')
     parser.add_argument('--output-dir', type=str, default='graphs_stats')
     parser.add_argument('--output-name', type=str,
-                        default='mean_cooperation_per_prompt_pair.png')
+                        default='mean_cooperation_per_prompt_pair.pdf')
 
     args = parser.parse_args()
 
